@@ -77,31 +77,50 @@ public class MyLocationService extends Service {
                 Common.savePref(getApplicationContext(),"lng",(float)longitude);
 
 
-
+                //움직임이 감지가 됐을 때
                 if (lastKnownLocation == null || hasMoved(lastKnownLocation, location)) {
                     // 마지막 위치가 없거나 현재 위치가 이동한 경우 작업 수행
                     lastKnownLocation = location;
                     performTaskWithLocation(location);
-
                     JSONObject data = new JSONObject();
-
+                    Log.d("gps1", latitude + ":" + longitude);
                     try{
                         //소켓통신으로 데이터 보내기
                         data.put("mb_id", Common.getPref(getApplicationContext(),"mb_id",""));
                         data.put("mb_name", Common.getPref(getApplicationContext(),"mb_name",""));
                         data.put("lat",latitude);
                         data.put("lng",longitude);
+                        data.put("is_move",true);
                     }catch (Exception e){
                         Log.d("error",e.getStackTrace().toString());
                     }
                     // 이벤트 전송
                     socket.emit("location", data.toString());
+                //움직임이 감지가 없을 때
+                }else{
+                    performTaskWithLocation(lastKnownLocation);
 
+                    JSONObject data = new JSONObject();
+
+                    Log.d("gps1", latitude + ":" + longitude);
+                    try{
+                        //소켓통신으로 데이터 보내기
+                        data.put("mb_id", Common.getPref(getApplicationContext(),"mb_id",""));
+                        data.put("mb_name", Common.getPref(getApplicationContext(),"mb_name",""));
+                        data.put("lat",latitude);
+                        data.put("lng",longitude);
+                        data.put("is_move",false);
+                    }catch (Exception e){
+                        Log.d("error",e.getStackTrace().toString());
+                    }
+                    // 이벤트 전송
+                    socket.emit("location", data.toString());
                 }
             }
 
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {
+                Log.d("onStatusChanged",status+"");
             }
 
             @Override
@@ -122,6 +141,7 @@ public class MyLocationService extends Service {
 
         // Foreground 서비스로 실행
         startForeground(SERVICE_NOTIFICATION_ID, buildNotification());
+
 
         return START_STICKY;
     }
@@ -154,7 +174,7 @@ public class MyLocationService extends Service {
         // 좌표값을 사용하여 원하는 작업 수행
         latitude = location.getLatitude();
         longitude = location.getLongitude();
-        Log.d("gps1", latitude + ":" + longitude);
+
     }
 
     @Nullable

@@ -358,17 +358,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(0 < Common.getPref(getApplicationContext(),"mb_id","").length() && Common.getPref(getApplicationContext(),"status",false)) {
-            stopService(serviceIntent);
-        }
+
     }
     //포그라운도로 옮기면 서비스 종료
     @Override
     protected void onPause() {
         super.onPause();
-        if(0 < Common.getPref(getApplicationContext(),"mb_id","").length() && Common.getPref(getApplicationContext(),"status",false)) {
-            startService(serviceIntent);
-        }
+
     }
     //뒤로가기를 눌렀을 때
     public void onBackPressed() {
@@ -448,7 +444,20 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void setStatus(boolean status){
             Common.savePref(getApplicationContext(),"status",status);
-            Log.d("status1",status+"");
+            //gps 켜기를 하면 gps 서비스 시작
+            gpsStartService();
+
+        }
+    }
+
+    private void gpsStartService(){
+        //서비스 실행하기
+        if(0 < Common.getPref(getApplicationContext(),"mb_id","").length() && Common.getPref(getApplicationContext(),"status",false)) {
+            Log.d("login","login");
+            startService(serviceIntent);
+            //서비스 멈추기
+        }else{
+            stopService(serviceIntent);
         }
     }
 }
