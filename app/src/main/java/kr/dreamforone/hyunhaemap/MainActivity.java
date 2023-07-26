@@ -30,6 +30,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -358,12 +359,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        gpsStartService();
 
     }
     //포그라운도로 옮기면 서비스 종료
     @Override
     protected void onPause() {
         super.onPause();
+        gpsStartService();
 
     }
     //뒤로가기를 눌렀을 때
@@ -421,15 +424,14 @@ public class MainActivity extends AppCompatActivity {
     class WebJavascriptEvent{
         @JavascriptInterface
         public void setLogin(String mb_id,String mb_name){
-            Log.d("login","로그인");
             Common.savePref(getApplicationContext(),"mb_id",mb_id);
             Common.savePref(getApplicationContext(),"mb_name",mb_name);
         }
         @JavascriptInterface
         public void setLogout(){
-            Log.d("logout","로그아웃");
             Common.savePref(getApplicationContext(),"mb_id","");
             Common.savePref(getApplicationContext(),"mb_name","");
+            Common.savePref(getApplicationContext(),"status",false);
         }
         @JavascriptInterface
         public void doShare(String url){
@@ -451,9 +453,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void gpsStartService(){
+        stopService(serviceIntent);//백그라운드 서비스를 먼저 멈추고
         //서비스 실행하기
         if(0 < Common.getPref(getApplicationContext(),"mb_id","").length() && Common.getPref(getApplicationContext(),"status",false)) {
-            Log.d("login","login");
+            Log.d("login1",Common.getPref(getApplicationContext(),"mb_id",""));
+
             startService(serviceIntent);
             //서비스 멈추기
         }else{
