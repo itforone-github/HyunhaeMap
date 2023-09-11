@@ -42,6 +42,7 @@ public class MyLocationService extends Service {
     private static final long MIN_TIME_BETWEEN_UPDATES = 3000; // 5초마다 (밀리초 단위)
     double latitude = 0.0;//위도
     double longitude = 0.0;//경도
+    double distance = 0.0;
     Socket socket;
     private Handler handler;
     private Runnable sendDataRunnable;
@@ -90,6 +91,7 @@ public class MyLocationService extends Service {
             Log.e("socket-error", e.getStackTrace().toString());
         }
         Log.d("lastKnownLocation", lastKnownLocation + "");
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
 
@@ -104,6 +106,7 @@ public class MyLocationService extends Service {
                 //현재 위치를 저장하기
                 Common.savePref(getApplicationContext(),"lat",(float)latitude);
                 Common.savePref(getApplicationContext(),"lng",(float)longitude);
+
                 //움직임이 감지가 됐을 때
                 if (lastKnownLocation == null || hasMoved(lastKnownLocation, location)) {
                     // 마지막 위치가 없거나 현재 위치가 이동한 경우 작업 수행
@@ -148,8 +151,8 @@ public class MyLocationService extends Service {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             try {
-
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_TIME_BETWEEN_UPDATES, 0, locationListener);
+                //locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_TIME_BETWEEN_UPDATES, 0, locationListener);
             }catch (Exception e){
                 Toast.makeText(this, "오류", Toast.LENGTH_SHORT).show();
             }
@@ -168,7 +171,8 @@ public class MyLocationService extends Service {
     private boolean hasMoved(Location lastLocation, Location currentLocation) {
         // 마지막 위치와 현재 위치를 비교하여 움직임 여부 확인
         float distance = lastLocation.distanceTo(currentLocation);
-        return distance > 0;
+        this.distance = distance;
+        return distance > 1;
     }
     //노티피케이션이 있어야 백그라운드 실행이 됨
     private Notification buildNotification() {
@@ -232,16 +236,24 @@ public class MyLocationService extends Service {
             data.put("mb_name", Common.getPref(getApplicationContext(), "mb_name", ""));
             data.put("lat", Common.getPref(getApplicationContext(),"lat",0f));
             data.put("lng", Common.getPref(getApplicationContext(),"lng",0f));
-            if(Common.getPref(getApplicationContext(),"lat",0f) == latitude &&
-                    Common.getPref(getApplicationContext(),"lng",0f) == longitude){
-                data.put("is_move",false);
-
-            }else if(latitude == 0f && longitude == 0f){
-                data.put("is_move",false);
-            }else{
-                data.put("is_move",true);
-                latitude = Common.getPref(getApplicationContext(),"lat",0f);
-                longitude = Common.getPref(getApplicationContext(),"lng",0f);
+            data.put("is_online",Common.getPref(getApplicationContext(),"isOnline",false));
+            //마지막 위치가 없거나 거리가 10m 이하이면 정지상태
+            if(distance < 2) {
+                data.put("is_move", false);
+            }else {
+                //마지막 위치와 현재위치가 동일 하다면은 정지
+                if (Common.getPref(getApplicationContext(), "lat", 0f) == latitude &&
+                        Common.getPref(getApplicationContext(), "lng", 0f) == longitude) {
+                    data.put("is_move", false);
+                //좌표값이 없으면 정지
+                } else if (latitude == 0f && longitude == 0f) {
+                    data.put("is_move", false);
+                } else {
+                    //움직임이 있을 때 움직임이 있다고 표시
+                    data.put("is_move", true);
+                    latitude = Common.getPref(getApplicationContext(), "lat", 0f);
+                    longitude = Common.getPref(getApplicationContext(), "lng", 0f);
+                }
             }
             socket.emit("location", data.toString());
         } catch (Exception e) {

@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
     private BackPressCloseHandler backPressCloseHandler;
     boolean isIndex = true;
+
     final int FILECHOOSER_NORMAL_REQ_CODE = 1200,FILECHOOSER_LOLLIPOP_REQ_CODE=1300;
     ValueCallback<Uri> filePathCallbackNormal;
     ValueCallback<Uri[]> filePathCallbackLollipop;
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this,R.layout.activity_main);
         binding.setMainData(this);
+        Common.savePref(this,"isOnline",true);//온라인인지 아닌지
         //화면을 계속 켜짐
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // 웹뷰를 실행할 때 메모리 누수가 심하지 않게 설정하는 것
@@ -359,6 +361,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Common.savePref(this,"isOnline",true);//온라인인지 아닌지
         gpsStartService();
 
     }
@@ -366,6 +369,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        Common.savePref(this,"isOnline",false);//온라인인지 아닌지
         gpsStartService();
 
     }
@@ -426,12 +430,14 @@ public class MainActivity extends AppCompatActivity {
         public void setLogin(String mb_id,String mb_name){
             Common.savePref(getApplicationContext(),"mb_id",mb_id);
             Common.savePref(getApplicationContext(),"mb_name",mb_name);
+            Common.savePref(getApplicationContext(),"isOnline",true);
         }
         @JavascriptInterface
         public void setLogout(){
             Common.savePref(getApplicationContext(),"mb_id","");
             Common.savePref(getApplicationContext(),"mb_name","");
             Common.savePref(getApplicationContext(),"status",false);
+            Common.savePref(getApplicationContext(),"isOnline",false);
         }
         @JavascriptInterface
         public void doShare(String url){
